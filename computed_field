@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, AnyUrl, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, AnyUrl, Field, field_validator, model_validator, computed_field
 from typing import List, Dict, Optional, Annotated
 
 
@@ -8,15 +8,17 @@ class Patient(BaseModel):
     email: EmailStr
     age: int
     weight: float
+    height: float
     married: bool
     allergies: List[str]
     contact_details: Dict[str,str]
 
-    @model_validator(mode='after')
-    def validate_emergency_contact(cls, model):
-        if model.age > 60 and 'emergency' not in model.contact_details:
-            raise ValueError("Patient older than 60 must have an emergency contact")
-        return model
+    @computed_field
+    @property
+    def bmi(self) -> float:
+        bmi = round(self.weight/(self.height**2),2)
+        return bmi
+    
 
 
 def insert_patient_data(patient: Patient):
@@ -24,6 +26,8 @@ def insert_patient_data(patient: Patient):
     print(patient.email)
     print(patient.age)
     print(patient.weight)
+    print(patient.height)
+    print(patient.bmi)
     print(patient.allergies)
     print(patient.married)
     print("inserted into database")
@@ -34,7 +38,7 @@ def update_patient_data(patient:Patient):
     print(patient.age)
     print("Updated")
 
-patient_info = {'name': 'Nitish','email':'abc@hdfc.com','age':65, 'weight':74.65, 'married':True,'allergies':['Dust','Pollen'],'contact_details': {'phone': '7001531459', 'emergency':'9732558688'}}
+patient_info = {'name': 'Nitish','email':'abc@hdfc.com','age':32, 'weight':74.65,'height':1.72, 'married':True,'allergies':['Dust','Pollen'],'contact_details': {'phone': '7001531459'}}
 
 patient1 = Patient(**patient_info)
 
